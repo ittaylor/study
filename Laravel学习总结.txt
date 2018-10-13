@@ -1,0 +1,39 @@
+1. Laravel的安装
+1）Laravel不同版本要求的PHP版本不同，一般Laravel最新版本要求PHP的最新教高版本，Laravel5.3需要PHP5.6以上版本，Laravel5.2需要PHP5.5以上；
+2）在Windows下需要设置系统环境变量的Path，Path中包括PHP最新版本的安装目录路径和Composer路径来支持Composer安装Laravel
+   通过composer安装Laravel会判断当前PHP版本从而下载不同版本的Laravel，
+   所以要在Windows环境变化的系统变量Path中增加最新版本的PHP路径，如“D:\webservers\wamp\bin\php\php7.1.0;”
+
+3）解决Win7下运行php Composer出现SSL报错的问题
+   https://my.oschina.net/yearnfar/blog/346727
+   CA证书下载地址：http://curl.haxx.se/docs/caextract.html
+   把证书下载copy到目录D:/wamp/php/verify/
+   然后修改php.ini文件
+   openssl.cafile= D:/wamp/php/verify/cacert.pem
+
+4）在Windows环境下要正确设置php.ini的扩展目录路径才能通过composer安装Laravel，如：
+   extension_dir = "D:\webservers\wamp\bin\php\php7.1.0\ext"
+   并要在php.ini中打开如下等扩展：
+   extension=php_mbstring.dll
+   extension=php_curl.dll
+   extension=php_gd2.dll
+   extension=php_pdo_mysql.dll
+   extension=php_sockets.dll
+   extension=php_tidy.dll
+   extension=php_soap.dll
+   extension=php_gettext.dll
+
+5）通过composer安装
+   a) 更新composer为最新版本命令
+      composer self-update
+   b) 在某目录下载安装Laravel
+      cd D:\webservers\www\latest
+      composer create-project laravel/laravel ./ --prefer-dist
+
+
+-------------------
+https://mp.weixin.qq.com/s/ewjGZCgc_TUhiZIINCLfbg
+https://mp.weixin.qq.com/s/0a-Sd_fCkE2mDFzNpKxf7A
+   
+
+

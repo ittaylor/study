@@ -1,0 +1,325 @@
+use Illuminate\Support\Facades\DB;
+
+一. 查询语句
+1. get---返回Illuminate\Support\Collection
+$users = DB::table('users')->get();
+
+
+2. first---返回第一个数据对象StdClass object
+ DB::table('users')->where('name', 'John')->first();
+
+
+3. value---返回第一个数据列值
+ $email = DB::table('users')->where('name', 'John')->value('email');
+
+
+4. pluck---返回可遍历的列值对象
+$titles = DB::table('roles')->pluck('title');
+foreach ($titles as $title) {
+    echo $title;
+}
+//----------------------
+$roles = DB::table('roles')->pluck('title', 'name');
+foreach ($roles as $name => $title) {
+    echo $title;
+}
+
+
+
+5. chunk ---大量数据的遍历
+DB::table('users')->orderBy('id')->chunk(100, function ($users) {
+    //每次取100条数据
+    foreach ($users as $user) {
+        //
+    }
+
+   if(终止遍历条件) {
+       return false;//通过return false终止遍历
+   }
+});
+
+
+6. 集合操作---count, max, min, avg
+ $users = DB::table('users')->count();
+ $price = DB::table('orders')->max('price');
+ $price = DB::table('orders')->where('finalized', 1)->avg('price');
+
+//去除重复行计算个数
+$count = DB::table('tablename')->count(DB::raw('DISTINCT name'));
+
+7. select--指定查询列
+$users = DB::table('users')->select('id', 'name', 'email as user_email')->get();
+
+
+8. distinct--去除重复行
+$users = DB::table('users')->distinct()->get();
+
+DB::table('users')->distinct('uid')->count('uid');
+
+
+9. Joins---联表操作
+1）Inner Join
+$users = DB::table('users')
+            ->join('contacts', 'users.id', '=', 'contacts.user_id')
+            ->join('orders', 'users.id', '=', 'orders.user_id')
+            ->select('users.*', 'contacts.phone', 'orders.price')
+            ->get();
+
+2）Left Join 
+$users = DB::table('users')
+            ->leftJoin('posts', 'users.id', '=', 'posts.user_id')
+            ->get();
+
+3）Cross Join
+$users = DB::table('sizes')
+            ->crossJoin('colours')
+            ->get();
+
+4）join高级用法
+DB::table('users')
+        ->join('contacts', function ($join) {
+            $join->on('users.id', '=', 'contacts.user_id')->orOn(...);
+        })
+        ->get();
+
+DB::table('users')
+        ->join('contacts', function ($join) {
+            $join->on('users.id', '=', 'contacts.user_id')
+                 ->where('contacts.user_id', '>', 5);
+        })
+        ->get();
+
+10. Unions
+$first = DB::table('users')
+            ->whereNull('first_name');
+
+$users = DB::table('users')
+            ->whereNull('last_name')
+            ->union($first)
+            ->get();
+
+11. 排序
+1）orderBy--按字段排序
+$users = DB::table('users')
+                ->orderBy('name', 'desc')
+                ->get();
+
+2）latest（desc） / oldest（asc）---按日期列排序，默认created_at列，也可指定字段
+$user = DB::table('users')
+                ->latest()
+                ->first();
+
+3）inRandomOrder--随机排序
+$randomUser = DB::table('users')
+                ->inRandomOrder()
+                ->first();
+
+12 groupBy / having / havingRaw--分组及分组条件
+$users = DB::table('users')
+                ->groupBy('account_id')
+                ->having('account_id', '>', 100)
+                ->get();
+
+$users = DB::table('orders')
+                ->select('department', DB::raw('SUM(price) as total_sales'))
+                ->groupBy('department')
+                ->havingRaw('SUM(price) > 2500')
+                ->get();
+
+13. skip/take或者offset/limit分页查询
+$users = DB::table('users')->skip(10)->take(5)->get();
+$users = DB::table('users')->offset(10)->limit(5)->get();
+
+
+二. where条件限制
+1. 简单条件
+$users = DB::table('users')->where('votes', '=', 100)->get();
+$users = DB::table('users')->where('votes', 100)->get();
+$users = DB::table('users')
+                ->where('votes', '>=', 100)
+                ->get();
+
+$users = DB::table('users')
+                ->where('votes', '<>', 100)
+                ->get();
+
+$users = DB::table('users')
+                ->where('name', 'like', 'T%')
+                ->get();
+
+2. 多条件数组
+$users = DB::table('users')->where([
+    ['status', '=', '1'],
+    ['subscribed', '<>', '1'],
+])->get();
+
+3. or条件
+$users = DB::table('users')
+                    ->where('votes', '>', 100)
+                    ->orWhere('name', 'John')
+                    ->get();
+
+
+4. 列间比较条件
+$users = DB::table('users')
+                ->whereColumn('first_name', 'last_name')
+                ->get();
+
+$users = DB::table('users')
+                ->whereColumn('updated_at', '>', 'created_at')
+                ->get();
+
+$users = DB::table('users')
+                ->whereColumn([
+                    ['first_name', '=', 'last_name'],
+                    ['updated_at', '>', 'created_at']
+                ])->get();
+
+5. between或者not
+$users = DB::table('users')
+                    ->whereBetween('votes', [1, 100])->get();
+
+$users = DB::table('users')
+                    ->whereNotBetween('votes', [1, 100])
+                    ->get();
+
+6. in或者not
+$users = DB::table('users')
+                    ->whereIn('id', [1, 2, 3])
+                    ->get();
+$users = DB::table('users')
+                    ->whereNotIn('id', [1, 2, 3])
+                    ->get();
+
+7. null或者not
+$users = DB::table('users')
+                    ->whereNull('updated_at')
+                    ->get();
+$users = DB::table('users')
+                    ->whereNotNull('updated_at')
+                    ->get();
+
+8. 年-whereYear/月-whereMonth/日-whereDay/日期-whereDate条件
+$users = DB::table('users')
+                ->whereYear('created_at', '2016')
+                ->get();
+
+$users = DB::table('users')
+                ->whereMonth('created_at', '12')
+                ->get();
+
+$users = DB::table('users')
+                ->whereDay('created_at', '31')
+                ->get();
+$users = DB::table('users')
+                ->whereDate('created_at', '2016-12-31')
+                ->get();
+
+9. 条件分组
+DB::table('users')
+            ->where('name', '=', 'John')
+            ->orWhere(function ($query) {
+                $query->where('votes', '>', 100)
+                      ->where('title', '<>', 'Admin');
+            })
+            ->get();
+
+10. Exists条件
+DB::table('users')
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('orders')
+                      ->whereRaw('orders.user_id = users.id');
+            })
+            ->get();
+等同于sql：
+select * from users
+where exists (
+    select 1 from orders where orders.user_id = users.id
+)
+
+11. json类型列字段查询（MySQL 5.7 支持json字段类型）
+$users = DB::table('users')
+                ->where('options->language', 'en')
+                ->get();
+
+$users = DB::table('users')
+                ->where('preferences->dining->meal', 'salad')
+                ->get();
+
+
+
+三、 插入语句-insert
+DB::table('users')->insert(
+    ['email' => 'john@example.com', 'votes' => 0]
+);
+
+//批量插入
+DB::table('users')->insert([
+    ['email' => 'taylor@example.com', 'votes' => 0],
+    ['email' => 'dayle@example.com', 'votes' => 0]
+]);
+
+//插入获取自增长id
+$id = DB::table('users')->insertGetId(
+    ['email' => 'john@example.com', 'votes' => 0]
+);
+
+
+四. 更新语句-update
+DB::table('users')
+            ->where('id', 1)
+            ->update(['votes' => 1]);
+
+//更新json字段
+DB::table('users')
+            ->where('id', 1)
+            ->update(['options->enabled' => true]);
+
+//自增/减
+DB::table('users')->increment('votes');
+DB::table('users')->increment('votes', 5);
+DB::table('users')->decrement('votes');
+DB::table('users')->decrement('votes', 5);
+
+//自增/减同时更新其它字段
+DB::table('users')->increment('votes', 1, ['name' => 'John']);
+
+
+五. 删除语句-delete
+DB::table('users')->delete();
+
+DB::table('users')->where('votes', '>', 100)->delete();
+
+//清空表所有数据
+DB::table('users')->truncate();
+
+六、锁操作
+1) sharedLock--保证在事务提交前选中行不会被修改
+DB::table('users')->where('votes', '>', 100)->sharedLock()->get();
+
+2）lockForUpdate--阻止选中行被修改或被sharedLock选中
+DB::table('users')->where('votes', '>', 100)->lockForUpdate()->get();
+
+
+七. 事务
+DB::transaction(function () {
+    DB::table('users')->update(['votes' => 1]);
+
+    DB::table('posts')->delete();
+});
+
+//事务死锁等待时间--n秒
+DB::transaction(function () {
+    DB::table('users')->update(['votes' => 1]);
+
+    DB::table('posts')->delete();
+}, 5);
+
+
+//手动使用事务
+DB::beginTransaction();
+
+DB::rollBack();
+
+DB::commit();

@@ -1,0 +1,42 @@
+﻿/public/index.php
+	---》引入/vendor/autoload.php
+			|引人composer的类自动加载处理机制：
+			|---》引入/vendor/composer/autoload_real.php
+			|--》文件中定义了ComposerAutoloaderInit{$hash$}类
+			|			--》类中定义了静态方法：getLoader()	
+	 
+	---》$app = '/bootstrap/app.php';
+				|实例化Application对象，并将项目目录作为其根路径
+				|	$app = new Illuminate\Foundation\Application(realpath(__DIR__.'/../'));
+				|		|构造器中处理： 
+				|		|  $this->setBasePath($basePath);//设置基础路径及lang、config、storage等路径
+				|		|  $this->registerBaseBindings();//注册基本绑定，添加app本身及PackageManifest进容器实例
+				|		|  $this->registerBaseServiceProviders();//注册Event、Log、Routing服务Provider实例
+				|		|  //下面注册一堆核心的别名，如：app、auth、cache、config、cookie、db、files、validator等
+				|		|  $this->registerCoreContainerAliases();
+				|
+				|
+				|
+				|
+				|
+
+	---》$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+                          
+	---》$response = $kernel->handle($request = Illuminate\Http\Request::capture());	
+						
+	---》$response->send();	
+
+	---》$kernel->terminate($request, $response);
+
+
+https://laravel-china.org/topics/1954/on-laravel-design-pattern
+
+IOC
+http://blog.csdn.net/qq_31989521/article/details/51635718
+
+PHP设计模式
+http://laravelacademy.org/resources/design-patterns/page/3
+
+
+
+						
